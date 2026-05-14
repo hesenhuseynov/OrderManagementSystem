@@ -75,7 +75,7 @@ namespace OrderManagementSystem.Features.Customers.GetAllCustomer
 
             var items = (await multi.ReadAsync<GetAllCustomersResponse>()).AsList();
 
-            var pagedResult = new PagedResult<GetAllCustomersResponse>
+            var pagedResult = new PagedResult<GetAllCustomersResponse> 
             {
                 Items = items,
                 PageNumber = request.PageNumber,

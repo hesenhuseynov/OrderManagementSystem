@@ -12,7 +12,7 @@ using System.Text;
 using System.Text.Json;
 
 namespace OrderManagementSystem.IntegrationTests.Orders
-{
+{ 
 
     [Collection("IntegrationTests")]
     public class CreateOrderTests
@@ -22,7 +22,6 @@ namespace OrderManagementSystem.IntegrationTests.Orders
         {
             PropertyNameCaseInsensitive = true
         };
-
 
         private readonly IntegrationTestFixture _fixture;
 

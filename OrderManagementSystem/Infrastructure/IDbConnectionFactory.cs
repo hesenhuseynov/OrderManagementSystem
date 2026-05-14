@@ -6,8 +6,5 @@ namespace OrderManagementSystem.Infrastructure
     public interface IDbConnectionFactory
     {
         Task<DbConnection> CreateConnectionAsync(CancellationToken cancellationToken);
-
-        Task<DbConnection> 
-        
     }
 }

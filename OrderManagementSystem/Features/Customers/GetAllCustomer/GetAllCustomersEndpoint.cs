@@ -1,39 +1,44 @@
 ﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using OrderManagementSystem.Common.Api;
 using OrderManagementSystem.Common.Models;
-using System.Net.NetworkInformation;
-using System.Reflection;
-using System.Security.AccessControl;
 
 namespace OrderManagementSystem.Features.Customers.GetAllCustomer
 {
-    [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/customers")]
-    [Tags("Customers")]
-    public class GetAllCustomersEndpoint:ApiControllerBase
-    {   
-        private readonly GetAllCustomersHandler _handler;
-        
-        public GetAllCustomersEndpoint(GetAllCustomersHandler handler)
-        {
-            ArgumentNullException.ThrowIfNull(handler); 
-            _handler = handler;  
-        }
 
-        [HttpGet]
-        [ProducesResponseType(typeof(PagedResult<GetAllCustomersResponse>),StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ValidationProblemDetails),StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(typeof(ProblemDetails),StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ProblemDetails),StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<PagedResult<GetAllCustomersResponse>>>GetAll(
-            [FromQuery]  GetAllCustomerRequest  request, CancellationToken cancellationToken 
-            )
+    public static class GetAllCustomersEndpoint
+    {
+        public static RouteGroupBuilder MapGetAllCustomersEndpoint(this RouteGroupBuilder group)
         {
-            var result = await _handler.HandleAsync(request, cancellationToken);
-            return HandleResult(result);
+            group.MapGet("", async (
+              [FromQuery]  int? PagenNumber,
+              [FromQuery]  int?  pageSize,
+              GetAllCustomersHandler handler,
+              HttpContext httpContext,
+              CancellationToken cancellationToken) =>
+            {
+                var request = new GetAllCustomerRequest
+                {
+                    PageNumber = PagenNumber ?? 1,
+                    PageSize = pageSize ?? 10
+                };
+
+                var result = await handler.HandleAsync(request, cancellationToken);
+                
+                return result.ToEndpointResult(httpContext);
+
+            })
+          .MapToApiVersion(new ApiVersion(1, 0))
+          .WithName("GetAllCustomers")
+          .Produces<PagedResult<GetAllCustomersResponse>>(StatusCodes.Status200OK)
+          .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest)
+          .Produces<ProblemDetails>(StatusCodes.Status403Forbidden)
+          .Produces<ProblemDetails>(StatusCodes.Status404NotFound)
+          .Produces<ProblemDetails>(StatusCodes.Status409Conflict)
+          .Produces<ProblemDetails>(StatusCodes.Status500InternalServerError);
+
+            return group;
         }
     }
 }

@@ -28,7 +28,6 @@ namespace OrderManagementSystem
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddControllers();
 
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddControllers();
@@ -85,7 +84,6 @@ namespace OrderManagementSystem
                 {
                     Timeout = TimeSpan.FromMilliseconds(settings.OperationTimeoutMilliseconds)
                 });
-
             });
 
             builder.Services.AddStackExchangeRedisCache(options =>
@@ -133,12 +131,24 @@ namespace OrderManagementSystem
             var app = builder.Build();
 
             app.UseGlobalExcpetionMiddleware();
-
+         
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
+            var apiVersionSet = app.NewApiVersionSet()
+                .HasApiVersion(new ApiVersion(1, 0))
+                .ReportApiVersions()
+                .Build();
+
+
+            app.MapGroup("/api/v{version:apiVersion}/customers")
+                .WithApiVersionSet(apiVersionSet)
+                .WithTags("Customers")
+                .MapGetAllCustomersEndpoint();
+
             app.MapControllers();  
 
             app.Run();
