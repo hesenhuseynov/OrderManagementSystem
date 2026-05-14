@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+    <File Path="testenvironments.json" />
+  </Folder>
+  <Project Path="OrderManagementSystem.IntegrationTests/OrderManagementSystem.IntegrationTests.csproj" />
+  <Project Path="OrderManagementSystem/OrderManagementSystem.csproj" />
+</Solution>
