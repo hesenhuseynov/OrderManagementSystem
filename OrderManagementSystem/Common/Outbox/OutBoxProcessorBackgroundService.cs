@@ -4,6 +4,7 @@ namespace OrderManagementSystem.Common.Outbox
 {
     public sealed class OutboxProcessorBackgroundService : BackgroundService
     {
+
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly OutboxProcessorOptions _options;
         private readonly ILogger<OutboxProcessorBackgroundService> _logger;

@@ -23,7 +23,6 @@ namespace OrderManagementSystem.Features.Customers.GetById
             _validator = validator;
         }
 
-        //ThreadPoolExcpetionFLow() A= > new{ 
 
         public async Task<Result<GetCustomerByIdResponse>> HandleAsync(GetCustomerByIdRequest request, CancellationToken cancellationToken )
         {
@@ -36,7 +35,6 @@ namespace OrderManagementSystem.Features.Customers.GetById
                 var errors = validationResult.ToErrorList();
                 return Result.Failure<GetCustomerByIdResponse>(errors);
             }
-
             const string sql = """
                 Select 
                 CustomerId,
@@ -45,6 +43,7 @@ namespace OrderManagementSystem.Features.Customers.GetById
                 Email  from Customers  
                 Where CustomerId=@CustomerId
                 """;
+
 
             var parameters = new
             {   
@@ -63,7 +62,6 @@ namespace OrderManagementSystem.Features.Customers.GetById
                      )
                 ); 
 
-            //ThreadPoolExcpetionFLow() a > new{
 
             if(customer is  null)
             {

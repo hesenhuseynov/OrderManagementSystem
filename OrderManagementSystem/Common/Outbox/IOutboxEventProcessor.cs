@@ -3,7 +3,5 @@
     public interface IOutboxEventProcessor
     {
         Task ProcessAsync(OutboxMessage message, CancellationToken cancellationToken);
-
-
     }
 }

@@ -38,6 +38,7 @@ namespace OrderManagementSystem.Features.Customers.GetAllCustomer
                     validationResult.ToErrorList());
             }
 
+
             const string sql = """
                 SELECT COUNT(*)
                 FROM dbo.Customers;

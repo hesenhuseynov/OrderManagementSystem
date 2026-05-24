@@ -211,7 +211,6 @@ namespace OrderManagementSystem.IntegrationTests.Orders
             restockMovementCount.Should().Be(1);
 
         }
-
         
         private sealed record CreateOrderResponseDto(
     int OrderId,

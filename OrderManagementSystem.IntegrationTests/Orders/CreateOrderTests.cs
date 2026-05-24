@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using OrderManagementSystem.Common.Caching;
+using OrderManagementSystem.Features.Orders;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -31,7 +32,7 @@ namespace OrderManagementSystem.IntegrationTests.Orders
         }
 
         [Fact]
-        public async Task CreateOrder_Should_Create_Order_Decrease_Stock_Warm_Cache()
+        public async Task CreateOrder_Should_Create_Order_Decrease_Stock_Write_History_And_Warm_Cache()
         {
 
             await _fixture.ResetDatabaseAsync();
@@ -39,7 +40,6 @@ namespace OrderManagementSystem.IntegrationTests.Orders
 
             var customerId = await _fixture.InsertCustomerAsync();
             var productId = await _fixture.InsertProductAsync();
-
 
             var request = new
             {
@@ -66,7 +66,6 @@ namespace OrderManagementSystem.IntegrationTests.Orders
             var body = System.Text.Json.JsonSerializer.Deserialize<CreateOrderResponseDto>(
                 json,
                 jsonOptions);
-
 
             body.Should().NotBeNull();
             body!.OrderId.Should().BeGreaterThan(0);
@@ -104,6 +103,35 @@ namespace OrderManagementSystem.IntegrationTests.Orders
 
             stock.Should().Be(3);
 
+            var inventoryMovement = await connection.QuerySingleOrDefaultAsync<InventoryMovementRow>("""
+
+                SELECT ProductId, OrderId,MovementType,Quantity,Reason  
+                FROM dbo.InventoryMovements
+                WHERE OrderId = @OrderId  
+                """, new { OrderId = body.OrderId }
+                );
+
+            inventoryMovement.Should().NotBeNull();
+            inventoryMovement!.ProductId.Should().Be(productId);
+            inventoryMovement.OrderId.Should().Be(body.OrderId);
+            inventoryMovement.MovementType.Should().Be("Reserve");
+            inventoryMovement.Quantity.Should().Be(2);
+            inventoryMovement.Reason.Should().Be(OrderConstants.Reasons.OrderCreated);
+
+            var statusHistory = await connection.QuerySingleOrDefaultAsync<OrderStatusHistoryRow>(
+                       """
+                       SELECT OrderId, OldStatus, NewStatus, ChangedBy, Reason
+                       FROM dbo.OrderStatusHistory
+                        WHERE OrderId = @OrderId
+                       """,
+                      new { OrderId = body.OrderId });
+
+            statusHistory.Should().NotBeNull();
+            statusHistory!.OrderId.Should().Be(body.OrderId);
+            statusHistory.OldStatus.Should().BeNull();
+            statusHistory.NewStatus.Should().Be("Pending");
+            statusHistory.ChangedBy.Should().Be("System");
+            statusHistory.Reason.Should().Be(OrderConstants.Reasons.OrderCreated);
             using var scope = _fixture.Factory.Services.CreateScope();
 
             var distributedCache = scope.ServiceProvider.GetRequiredService<IDistributedCache>();
@@ -289,13 +317,13 @@ namespace OrderManagementSystem.IntegrationTests.Orders
 
 
         private sealed record CreateOrderResponseDto(
- int OrderId,
- string OrderNumber,
- int CustomerId,
- DateTime OrderDate,
- string Status,
- string Currency,
- decimal TotalAmount);
+                          int OrderId,
+                         string OrderNumber,
+                            int CustomerId,
+                           DateTime OrderDate,
+                            string Status,
+                            string Currency,
+                          decimal TotalAmount);
 
         private sealed class OrderRow
         {
@@ -304,6 +332,24 @@ namespace OrderManagementSystem.IntegrationTests.Orders
             public string Status { get; init; } = string.Empty;
             public string Currency { get; init; } = string.Empty;
             public decimal TotalAmount { get; init; }
+        }
+
+        private sealed class InventoryMovementRow
+        {
+            public int ProductId { get; init; }
+            public int OrderId { get; init; }
+            public string MovementType { get; init; } = string.Empty;
+            public int Quantity { get; init; }
+            public string Reason { get; init; } = string.Empty;
+        }
+
+        private sealed class OrderStatusHistoryRow
+        {
+            public int OrderId { get; init; }
+            public string? OldStatus { get; init; }
+            public string NewStatus { get; init; } = string.Empty;
+            public string ChangedBy { get; init; } = string.Empty;
+            public string Reason { get; init; } = string.Empty;
         }
     }  
 }

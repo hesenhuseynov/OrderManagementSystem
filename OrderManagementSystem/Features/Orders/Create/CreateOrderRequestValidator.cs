@@ -2,7 +2,7 @@
 
 namespace OrderManagementSystem.Features.Orders.Create
 {
-    public class CreateOrderRequestValidator:AbstractValidator<CreateOrderRequest>
+    public sealed class CreateOrderRequestValidator:AbstractValidator<CreateOrderRequest>
     {
         public CreateOrderRequestValidator()
         {

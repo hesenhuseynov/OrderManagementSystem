@@ -9,6 +9,7 @@ using OrderManagementSystem.Features.Orders.Cancel;
 using OrderManagementSystem.Features.Orders.Create;
 using OrderManagementSystem.Features.Orders.GetById;
 using OrderManagementSystem.Features.Orders.Pay;
+using OrderManagementSystem.Features.Orders.Shared;
 using OrderManagementSystem.Features.Products.Create;
 using OrderManagementSystem.Features.Products.Search;
 using OrderManagementSystem.Infrastructure;
@@ -27,7 +28,6 @@ namespace OrderManagementSystem
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
 
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddControllers();
@@ -103,14 +103,14 @@ namespace OrderManagementSystem
             builder.Services.AddScoped<CreateProductHandler>();
             builder.Services.AddScoped<SearchProductsHandler>();
             builder.Services.AddScoped<PayOrderHandler>();
+
+
             builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
-            
 
             builder.Services.Configure<OutboxProcessorOptions>(
                  builder.Configuration.GetSection(OutboxProcessorOptions.SectionName));
 
-              builder.Services.AddInfrasturcture();
-
+            builder.Services.AddInfrasturcture();
 
             builder.Services.AddHostedService<OutboxProcessorBackgroundService>();
 
@@ -124,9 +124,6 @@ namespace OrderManagementSystem
                 options.GroupNameFormat = "'v'VVV";
                 options.SubstituteApiVersionInUrl = true;
             }); 
-
-
-
 
             var app = builder.Build();
 

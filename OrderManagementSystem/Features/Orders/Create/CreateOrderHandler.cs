@@ -5,19 +5,21 @@ using OrderManagementSystem.Common.Caching;
 using OrderManagementSystem.Common.Results;
 using OrderManagementSystem.Common.Validation;
 using OrderManagementSystem.Features.Orders.GetById;
+using OrderManagementSystem.Features.Orders.Shared;
 using OrderManagementSystem.Infrastructure;
 using System.Data;
 using System.Drawing;
 
 namespace OrderManagementSystem.Features.Orders.Create
 {
-    public sealed class CreateOrderHandler
+    public  sealed class CreateOrderHandler
     {
         private readonly IDbConnectionFactory _dbConnectionFactory;
         private readonly IValidator<CreateOrderRequest> _validator;
         private readonly IResilientCacheService _resilientCacheService;
         private readonly CacheSettings _cacheSettings;
-        private readonly ILogger<CreateOrderHandler> _logger; 
+        private readonly ILogger<CreateOrderHandler> _logger;
+     
 
         public CreateOrderHandler(IDbConnectionFactory dbConnectionFactory,
             IValidator<CreateOrderRequest> validator, IResilientCacheService resilientCacheService,
@@ -28,12 +30,12 @@ namespace OrderManagementSystem.Features.Orders.Create
             ArgumentNullException.ThrowIfNull(resilientCacheService);
             ArgumentNullException.ThrowIfNull(cacheOptions);
             ArgumentNullException.ThrowIfNull(logger);
-
             _dbConnectionFactory = dbConnectionFactory;
             _validator = validator;
             _resilientCacheService = resilientCacheService;
             _cacheSettings = cacheOptions.Value;
             _logger = logger;
+           
         }
 
         public async Task<Result<CreateOrderResponse>> HandleAsync(CreateOrderRequest request, CancellationToken cancellationToken)
@@ -200,7 +202,7 @@ namespace OrderManagementSystem.Features.Orders.Create
                         OrderId = createdOrder.OrderId,
                         ProductId = item.ProductId,
                         Quantity = item.Quantity,
-                        UnitPrice = productMap[item.ProductId].Price
+                        UnitPrice = productMap[item.ProductId].Price 
                     });
 
 
@@ -213,12 +215,14 @@ namespace OrderManagementSystem.Features.Orders.Create
                                )
                           );
 
-
                     const string updatestockSql = """
                      UPDATE  dbo.Products  SET StockQuantity= StockQuantity- @Quantity 
-                     WHERE  ProductId =  @ProductId  
-
+                     WHERE  ProductId =  @ProductId 
+                     AND  IsActive=1
+                     AND  StockQuantity>=@Quantity
                     """;
+
+
 
                     var stockParameters = request.Items.Select(item => new
                     {
@@ -234,73 +238,34 @@ namespace OrderManagementSystem.Features.Orders.Create
                     }
 
 
-                    const string insertInventoryMovementsSql = """
-                     INSERT  INTO dbo.InventoryMovements(
-                         ProductId, 
-                         OrderId,
-                         MovementType,
-                         Quantity, 
-                         Reason
-                     )
-                      VALUES(
-                       @ProductId,
-                       @OrderId, 
-                       @MovementType , 
-                       @Quantity, 
-                       @Reason
-                      ); 
-                    """;
+                  
+                    var inventoryMovements = request.Items.Select(item =>
+                       new InventoryMovementInsertRow(
+                           ProductId: item.ProductId,
+                          OrderId: createdOrder.OrderId,
+                          MovementType: OrderConstants.InventoryMovementTypes.Reserve,
+                          Quantity: item.Quantity,
+                          Reason: OrderConstants.Reasons.OrderCreated));
 
-                    var movementParameters = request.Items.Select(item => new
-                    {
-                        ProductId = item.ProductId,
-                        OrderId = createdOrder.OrderId,
-                        MovementType = OrderConstants.InventoryMovementTypes.Reserve,
-                        Quantity = item.Quantity,
-                        Reason = OrderConstants.Reasons.OrderCreated
-                    });
 
-                    await connection.ExecuteAsync(
-                        new CommandDefinition(
-                            insertInventoryMovementsSql,
-                            movementParameters,
-                            transaction: transaction,
-                            cancellationToken: cancellationToken));
+                    await InventoryMovementWriter.AddManyAsync(
+                        connection,
+                        transaction,
+                        inventoryMovements,
+                        cancellationToken);
 
-                    const string insertOrderStatusHistorySql = """
-                    INSERT INTO dbo.OrderStatusHistory
-                    (
-                        OrderId,
-                        OldStatus,
-                        NewStatus,
-                        ChangedBy,
-                        Reason
-                    )
-                    VALUES
-                    (
-                        @OrderId,
-                        @OldStatus,
-                        @NewStatus,
-                        @ChangedBy,
-                        @Reason
-                    );
-                    """;
+                    await OrderStatusHistoryWriter.AddAsync(
+                         connection,
+                         transaction,
+                         orderId: createdOrder.OrderId,
+                         oldStatus: null,
+                         newStatus: OrderConstants.Statuses.Pending,
+                         changedBy: OrderConstants.ChangedBy.System,
+                         reason: OrderConstants.Reasons.OrderCreated,
+                          cancellationToken);
 
-                    await connection.ExecuteAsync(
-                        new CommandDefinition(
-                            insertOrderStatusHistorySql,
-                            new
-                            {
-                                OrderId = createdOrder.OrderId,
-                                OldStatus = (string?)null,
-                                NewStatus = OrderConstants.Statuses.Pending,
-                                ChangedBy = OrderConstants.ChangedBy.System,
-                                Reason = OrderConstants.Reasons.OrderCreated
-                            },
-                            transaction: transaction,
-                            cancellationToken: cancellationToken));
 
-                     cacheResponse = BuilderOrderCacheResponse(
+                    cacheResponse = BuilderOrderCacheResponse(
                         createdOrder,
                         customer,
                         request,
@@ -336,7 +301,6 @@ namespace OrderManagementSystem.Features.Orders.Create
                       CacheKeys.OrderById(createdOrder.OrderId));
 
             return Result.Success(createdOrder);
-
         }
 
 

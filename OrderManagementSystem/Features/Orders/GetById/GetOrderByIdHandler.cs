@@ -9,6 +9,7 @@ using OrderManagementSystem.Features.Orders.Create;
 using OrderManagementSystem.Infrastructure;
 using System.Data;
 using System.Data.Common;
+using System.Security.Cryptography.X509Certificates;
 
 namespace OrderManagementSystem.Features.Orders.GetById
 {
@@ -64,7 +65,6 @@ namespace OrderManagementSystem.Features.Orders.GetById
 
                 return Result.Success(cacheResult.Value!);
             }
-
 
             _logger.LogInformation(
                 "Order detail cache miss or cache unavailable. Loading from database. OrderId: {OrderId}, CacheKey: {CacheKey}",

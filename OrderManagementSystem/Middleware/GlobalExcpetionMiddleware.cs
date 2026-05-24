@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using System.Reflection;
+using System.Runtime.Intrinsics.X86;
 
 namespace OrderManagementSystem.Middleware
 {

@@ -1,6 +1,7 @@
 ﻿using Elastic.Clients.Elasticsearch;
 using Microsoft.Extensions.Options;
 using OrderManagementSystem.Common.Outbox;
+using OrderManagementSystem.Features.Orders.Shared;
 using OrderManagementSystem.Infrastructure.Payments;
 using OrderManagementSystem.Infrastructure.Search;
 using System.Data;

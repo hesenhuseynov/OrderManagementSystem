@@ -30,6 +30,7 @@ namespace OrderManagementSystem.Common.Results
                 throw new ArgumentException("Errors cannot contain  null entries", nameof(errors));  
             }
 
+            
             IsSuccess = isSucess;
         }
 
@@ -40,7 +41,6 @@ namespace OrderManagementSystem.Common.Results
 
         public Error? FirstError => _errors.FirstOrDefault();
 
-        //ThreadRouteExcpetionFlow() = > new{ctor=>ctor.AsENThreadROUteExcpetionFLow() = >new{ctor=> s
 
         public static Result Success() => new(true, Array.Empty<Error>()); 
 
