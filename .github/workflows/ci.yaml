@@ -26,13 +26,13 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore OrderManagementSystem.sln
+        run: dotnet restore OrderManagementSystem.slnx
 
       - name: Build solution
-        run: dotnet build OrderManagementSystem.sln --configuration Release --no-restore
+        run: dotnet build OrderManagementSystem.slnx --configuration Release --no-restore
 
       - name: Run tests
-        run: dotnet test OrderManagementSystem.sln --configuration Release --no-build --logger trx --results-directory TestResults
+        run: dotnet test OrderManagementSystem.slnx --configuration Release --no-build --logger trx --results-directory TestResults
 
       - name: Upload test results
         if: always()
