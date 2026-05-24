@@ -44,7 +44,10 @@ namespace OrderManagementSystem.IntegrationTests
                 {
                     ["ConnectionStrings:DefaultConnection"] = _sqlConnectionString,
                     ["ConnectionStrings:Redis"] = _redisConnectionString,
-                    ["CacheSettings:OrderByIdTtlMinutes"] = "5"
+                    ["CacheSettings:OrderByIdTtlMinutes"] = "5",
+
+                    ["Elasticsearch:Uri"] = "http://localhost:9200",
+                    ["Elasticsearch:ProductsIndexName"] = "oms-products"
                 });
                 
             });
