@@ -1,4 +1,5 @@
-﻿using OrderManagementSystem.Features.Products.Events;
+﻿using OrderManagementSystem.Features.Orders.Pay.Contracts;
+using OrderManagementSystem.Features.Products.Events;
 using OrderManagementSystem.Infrastructure.Search;
 using System.Text.Json;
 
@@ -15,7 +16,7 @@ namespace OrderManagementSystem.Common.Outbox
             ArgumentNullException.ThrowIfNull(productSearchIndexer);
 
             _productSearchIndexer = productSearchIndexer;
-        }
+        } 
 
         public async Task ProcessAsync(
              OutboxMessage message,
@@ -28,6 +29,12 @@ namespace OrderManagementSystem.Common.Outbox
                 await ProcessProductCreatedAsync(message, cancellationToken);
                 return;
             }
+           
+            if(message.EventType == OutBoxEventTypes.PaymentCompleted)
+            {
+                ProcessPaymentCompleted(message);
+                return;
+            }
 
             throw new NotSupportedException(
                 $"Unsupported outbox event type: {message.EventType}");
@@ -37,7 +44,7 @@ namespace OrderManagementSystem.Common.Outbox
             OutboxMessage message,
             CancellationToken cancellationToken)
         {
-            var productCreatedEvent = JsonSerializer.Deserialize<ProductCreatedEvent>(
+            var productCreatedEvent =   JsonSerializer.Deserialize<ProductCreatedEvent>(
                 message.Payload,
                 JsonOptions);
 
@@ -55,8 +62,32 @@ namespace OrderManagementSystem.Common.Outbox
                 Price = productCreatedEvent.Price,
                 IsActive = productCreatedEvent.IsActive
             };
-
+           
             await _productSearchIndexer.IndexAsync(document, cancellationToken);
+        }
+
+        private static void ProcessPaymentCompleted(OutboxMessage message)
+        {
+            var paymentCompletedEvent = JsonSerializer.Deserialize<PaymentCompletedEvent>(
+                message.Payload,
+                JsonOptions);
+
+            if (paymentCompletedEvent is null)
+            {
+                throw new InvalidOperationException(
+                    $"Could not deserialize PaymentCompleted event. OutboxEventId: {message.OutboxEventId}");
+            }
+
+            if (paymentCompletedEvent.OrderId <= 0 ||
+                paymentCompletedEvent.PaymentId <= 0 ||
+                string.IsNullOrWhiteSpace(paymentCompletedEvent.TransactionId) ||
+                paymentCompletedEvent.Amount <= 0 ||
+                string.IsNullOrWhiteSpace(paymentCompletedEvent.Currency) ||
+                paymentCompletedEvent.PaidAt == default)
+            {
+                throw new InvalidOperationException(
+                    $"Invalid PaymentCompleted event payload. OutboxEventId: {message.OutboxEventId}");
+            }
         }
     }
 
