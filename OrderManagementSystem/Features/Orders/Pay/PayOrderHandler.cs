@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using FluentValidation;
 using Microsoft.Data.SqlClient;
+using OrderManagementSystem.Common.Caching;
 using OrderManagementSystem.Common.Errors;
 using OrderManagementSystem.Common.Outbox;
 using OrderManagementSystem.Common.Results;
@@ -18,6 +19,7 @@ namespace OrderManagementSystem.Features.Orders.Pay
         private readonly IOutboxWriter _outboxWriter;
         private readonly IValidator<PayOrderRequest> _validator;
         private readonly IPaymentGateway _paymentGateway;
+        private readonly IResilientCacheService _resilientCacheService;
         private readonly ILogger<PayOrderHandler> _logger;
 
         public PayOrderHandler(
@@ -25,18 +27,21 @@ namespace OrderManagementSystem.Features.Orders.Pay
             IOutboxWriter outboxWriter,
             IValidator<PayOrderRequest> validator,
             IPaymentGateway paymentGateway,
+            IResilientCacheService resilientCacheService,
             ILogger<PayOrderHandler> logger)
         {
             ArgumentNullException.ThrowIfNull(dbConnectionFactory);
             ArgumentNullException.ThrowIfNull(outboxWriter);
             ArgumentNullException.ThrowIfNull(validator);
             ArgumentNullException.ThrowIfNull(paymentGateway);
+            ArgumentNullException.ThrowIfNull(resilientCacheService);
             ArgumentNullException.ThrowIfNull(logger);
 
             _dbConnectionFactory = dbConnectionFactory;
             _outboxWriter = outboxWriter;
             _validator = validator;
             _paymentGateway = paymentGateway;
+            _resilientCacheService = resilientCacheService;
             _logger = logger;
         }
 
@@ -204,6 +209,10 @@ namespace OrderManagementSystem.Features.Orders.Pay
                     cancellationToken);
 
                await  transaction.CommitAsync();
+
+                await _resilientCacheService.TryRemoveAsync(
+                    CacheKeys.OrderById(order.OrderId),
+                    cancellationToken);
 
                 return Result.Success(new PayOrderResponse(
                     OrderId: order.OrderId,
