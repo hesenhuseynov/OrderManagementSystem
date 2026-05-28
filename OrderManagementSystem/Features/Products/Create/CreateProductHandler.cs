@@ -50,10 +50,10 @@ namespace OrderManagementSystem.Features.Products.Create
 
             CreateProductResponse? createdProduct = null;
 
-            using (DbConnection connection = await _dbConnectionFactory.CreateConnectionAsync(cancellationToken))
+            using (var connection = await _dbConnectionFactory.CreateConnectionAsync(cancellationToken))
             {
-                connection.Open();
-                using var transaction = connection.BeginTransaction();
+               await   connection.OpenAsync();
+                using var transaction =  await connection.BeginTransactionAsync();
 
                 try
                 {

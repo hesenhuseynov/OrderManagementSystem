@@ -20,6 +20,7 @@ using Polly.CircuitBreaker;
 using Polly.Timeout;
 using StackExchange.Redis;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 
 namespace OrderManagementSystem
 {
@@ -75,6 +76,7 @@ namespace OrderManagementSystem
                     Timeout = TimeSpan.FromMilliseconds(settings.OperationTimeoutMilliseconds)
                 });
             });
+
 
             builder.Services.AddResiliencePipeline("redis-cache-invalidation", (pipelineBuilder, context) =>
             {

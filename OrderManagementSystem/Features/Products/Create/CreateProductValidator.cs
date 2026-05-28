@@ -12,7 +12,7 @@ namespace OrderManagementSystem.Features.Products.Create
                 .NotEmpty()
                 .WithMessage("Sku is required")
                 .WithErrorCode("product.sku_required")
-                .MaximumLength(100)
+                .MaximumLength(50)
                 .WithMessage("SKU must not exceed 100 characters .")
                 .WithErrorCode("product.sku_too_long");
 
