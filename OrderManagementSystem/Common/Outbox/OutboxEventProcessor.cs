@@ -1,4 +1,5 @@
-﻿using OrderManagementSystem.Features.Orders.Pay.Contracts;
+﻿using Microsoft.AspNetCore.Mvc.Formatters;
+using OrderManagementSystem.Features.Orders.Pay.Contracts;
 using OrderManagementSystem.Features.Products.Events;
 using OrderManagementSystem.Infrastructure.Search;
 using System.Text.Json;
@@ -16,7 +17,7 @@ namespace OrderManagementSystem.Common.Outbox
             ArgumentNullException.ThrowIfNull(productSearchIndexer);
 
             _productSearchIndexer = productSearchIndexer;
-        } 
+        }
 
         public async Task ProcessAsync(
              OutboxMessage message,
@@ -88,6 +89,7 @@ namespace OrderManagementSystem.Common.Outbox
                 throw new InvalidOperationException(
                     $"Invalid PaymentCompleted event payload. OutboxEventId: {message.OutboxEventId}");
             }
+
         }
     }
 

@@ -78,7 +78,7 @@ namespace OrderManagementSystem.IntegrationTests
                 DELETE FROM dbo.Products;
                 DELETE FROM dbo.Customers;
                 """;
-                using var connection = CreateConnection();
+                using var connection =  CreateConnection();
                 connection.Open();
 
                 await connection.ExecuteAsync(sql);

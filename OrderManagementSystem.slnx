@@ -4,5 +4,6 @@
     <File Path="testenvironments.json" />
   </Folder>
   <Project Path="OrderManagementSystem.IntegrationTests/OrderManagementSystem.IntegrationTests.csproj" />
+  <Project Path="OrderManagementSystem.UnitTests/OrderManagementSystem.UnitTests.csproj" Id="35a68ee9-01e1-47ae-9633-29525b4236b9" />
   <Project Path="OrderManagementSystem/OrderManagementSystem.csproj" />
 </Solution>
