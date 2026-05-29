@@ -10,6 +10,7 @@ using OrderManagementSystem.Features.Orders.Pay.Contracts;
 using OrderManagementSystem.Infrastructure;
 using OrderManagementSystem.Infrastructure.Payments;
 using System.Data;
+using System.Security.Cryptography.X509Certificates;
 
 namespace OrderManagementSystem.Features.Orders.Pay
 {
@@ -22,7 +23,7 @@ namespace OrderManagementSystem.Features.Orders.Pay
         private readonly IResilientCacheService _resilientCacheService;
         private readonly ILogger<PayOrderHandler> _logger;
 
-        public PayOrderHandler(
+            public PayOrderHandler(
             IDbConnectionFactory dbConnectionFactory,
             IOutboxWriter outboxWriter,
             IValidator<PayOrderRequest> validator,
@@ -121,6 +122,7 @@ namespace OrderManagementSystem.Features.Orders.Pay
                     return Result.Failure<PayOrderResponse>(
                         PaymentErrors.OrderCannotBePaid(orderId, order.Status));
                 }
+
 
                 var paymentCommand = new PaymentCommand(
                     IdempotencyKey: idempotencyKey,

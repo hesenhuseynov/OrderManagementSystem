@@ -20,7 +20,7 @@ namespace OrderManagementSystem.Common.Api
             return MapErrors<T>(result.Errors);
         }
 
-        
+
         protected ActionResult HandleResult(Result result)
         {
             ArgumentNullException.ThrowIfNull(result);

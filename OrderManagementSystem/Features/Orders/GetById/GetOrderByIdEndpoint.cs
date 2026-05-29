@@ -1,33 +1,32 @@
-﻿using Asp.Versioning;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using OrderManagementSystem.Common.Api;
+
 namespace OrderManagementSystem.Features.Orders.GetById
 {
-    [ApiVersion( "1.0")]
-    [Route("api/v{version:apiVersion}/orders")]
-    [Tags("Orders")]
-    public sealed class GetOrderByIdEndpoint :ApiControllerBase
+    public static class GetOrderByIdEndpoint
     {
-        private readonly GetOrderByIdHandler _handler;
-
-        public GetOrderByIdEndpoint(GetOrderByIdHandler handler)
+        public static RouteGroupBuilder MapGetOrderByIdEndpoint(this RouteGroupBuilder group)
         {
-            ArgumentNullException.ThrowIfNull(handler); 
-            _handler = handler; 
+            group.MapGet("{id:int}", async (
+                [FromRoute] int id,
+                GetOrderByIdHandler handler,
+                HttpContext httpContext,
+                CancellationToken cancellationToken) =>
+            {
+                var result = await handler.HandleAsync(new GetOrderByIdRequest(id), cancellationToken);
+
+                return result.ToEndpointResult(httpContext);
+            })
+            .MapToApiVersion(new ApiVersion(1, 0))
+            .WithName("GetOrderById")
+            .Produces<GetOrderByIdResponse>(StatusCodes.Status200OK)
+            .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest)
+            .Produces<ProblemDetails>(StatusCodes.Status404NotFound)
+            .Produces<ProblemDetails>(StatusCodes.Status500InternalServerError);
+
+            return group;
+
         }
-
-        [HttpGet("{id:int}")]
-        [ProducesResponseType(typeof(GetOrderByIdResponse ) , StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof( ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-        [ProducesResponseType(typeof(ProblemDetails),StatusCodes.Status500InternalServerError)]
-        
-        public async Task<ActionResult<GetOrderByIdResponse>> GetById([FromRoute]  int id, CancellationToken cancellationToken)
-        {
-            var result = await _handler.HandleAsync(new GetOrderByIdRequest(id), cancellationToken);
-
-            return HandleResult(result);
-        }
-
     }
 }
