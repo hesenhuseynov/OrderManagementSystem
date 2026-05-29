@@ -13,7 +13,7 @@ namespace OrderManagementSystem.Common.Results
             ArgumentNullException.ThrowIfNull(result);
             ArgumentNullException.ThrowIfNull(onSuccess);
             ArgumentNullException.ThrowIfNull(onFailure);
-
+           
             return result.IsSuccess
                 ? onSuccess()
                 : onFailure(result.Errors);
@@ -47,6 +47,7 @@ namespace OrderManagementSystem.Common.Results
                 ? Result.Success(map(result.Value))
                 : Result.Failure<TOut>(result.Errors);
         }
+
 
         public static Result<TOut> Bind<TValue, TOut>(
             this Result<TValue> result,

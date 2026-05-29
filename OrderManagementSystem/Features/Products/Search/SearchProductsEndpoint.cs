@@ -1,37 +1,31 @@
-﻿using Asp.Versioning;
-using Microsoft.AspNetCore.Components;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using OrderManagementSystem.Common.Api;
 
 namespace OrderManagementSystem.Features.Products.Search
 {
-    [ApiVersion("1.0")]
-    [Microsoft.AspNetCore.Mvc.Route("api/v{version:apiVersion}/products")]
-    [Tags("Products")]
-
-    public class SearchProductsEndpoint:ApiControllerBase
+    public static class SearchProductsEndpoint
     {
-        private readonly SearchProductsHandler _handler;
-
-        public SearchProductsEndpoint(SearchProductsHandler handler)
+        public static RouteGroupBuilder MapSearchProductsEndpoint(this RouteGroupBuilder group)
         {
-            ArgumentNullException.ThrowIfNull(handler);
+            group.MapGet("search", async (
+                [FromQuery] string? query,
+                SearchProductsHandler handler,
+                HttpContext httpContext,
+                CancellationToken cancellationToken) =>
+            {
+                var request = new SearchProductsRequest(query ?? string.Empty);
+                var result = await handler.HandleAsync(request, cancellationToken);
 
-            _handler = handler;
-        }
+                return result.ToEndpointResult(httpContext);
+            })
+            .MapToApiVersion(new ApiVersion(1, 0))
+            .WithName("SearchProducts")
+            .Produces<IReadOnlyList<SearchProductResponse>>(StatusCodes.Status200OK)
+            .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest)
+            .Produces<ProblemDetails>(StatusCodes.Status500InternalServerError);
 
-        [HttpGet("search")]
-        [ProducesResponseType(typeof(IReadOnlyList<SearchProductResponse>), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-
-        public async Task<ActionResult<IReadOnlyList<SearchProductResponse>>>Search([FromQuery] string query, CancellationToken cancellationToken)
-        {
-            var request = new SearchProductsRequest(query);
-
-            var result = await _handler.HandleAsync(request, cancellationToken);
-           
-            return HandleResult(result);
+            return group;
         }
     }
 }

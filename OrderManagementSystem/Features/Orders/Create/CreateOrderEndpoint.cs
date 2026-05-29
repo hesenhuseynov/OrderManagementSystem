@@ -1,34 +1,33 @@
-﻿using Asp.Versioning;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using OrderManagementSystem.Common.Api;
 
 namespace OrderManagementSystem.Features.Orders.Create
 {
-    [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/orders")]
-    [Tags("Orders")]
-    public sealed class CreateOrderEndpoint:ApiControllerBase
+    public static class CreateOrderEndpoint
     {
-        private readonly CreateOrderHandler _handler;
-        public CreateOrderEndpoint(CreateOrderHandler handler)
+        public static RouteGroupBuilder MapCreateOrderEndpoint(this RouteGroupBuilder group)
         {
-            _handler = handler;
-        }
+            group.MapPost("", async (
+                [FromBody] CreateOrderRequest request,
+                CreateOrderHandler handler,
+                HttpContext httpContext,
+                CancellationToken cancellationToken) =>
+            {
+                var result = await handler.HandleAsync(request, cancellationToken);
 
-        [HttpPost]
-        [ProducesResponseType(typeof(CreateOrderResponse), StatusCodes.Status201Created)]
-        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<CreateOrderResponse>> Create(
-         [FromBody] CreateOrderRequest request,
-         CancellationToken cancellationToken)
-        {
-            var result = await _handler.HandleAsync(request, cancellationToken);
+                return result.ToCreatedEndpointResult(httpContext);
+            })
+            .MapToApiVersion(new ApiVersion(1, 0))
+            .WithName("CreateOrder")
+            .Produces<CreateOrderResponse>(StatusCodes.Status201Created)
+            .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest)
+            .Produces<ProblemDetails>(StatusCodes.Status404NotFound)
+            .Produces<ProblemDetails>(StatusCodes.Status409Conflict)
+            .Produces<ProblemDetails>(StatusCodes.Status403Forbidden)
+            .Produces<ProblemDetails>(StatusCodes.Status500InternalServerError);
 
-            return HandleCreatedResult(result);
+            return group;
         }
     }
 }

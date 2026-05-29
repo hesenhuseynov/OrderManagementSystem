@@ -1,37 +1,33 @@
-﻿using Asp.Versioning;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using OrderManagementSystem.Common.Api;
 
 namespace OrderManagementSystem.Features.Customers.GetById
 {
-    [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/customers")]
-    [Tags("Customers")]
-
-    public class GetCustomerByIdEndpoint:ApiControllerBase
+    public static class GetCustomerByIdEndpoint
     {
-        private readonly GetCustomerByIdHandler _handler;
-
-        
-        public GetCustomerByIdEndpoint(GetCustomerByIdHandler handler)
+        public static RouteGroupBuilder MapGetCustomerByIdEndpoint(this RouteGroupBuilder group)
         {
-            ArgumentNullException.ThrowIfNull(handler);
-            _handler = handler; 
-        }
+            group.MapGet("{id:int}", async (
+                [FromRoute] int id,
+                GetCustomerByIdHandler handler,
+                HttpContext httpContext,
+                CancellationToken cancellationToken) =>
+            {
+                var result = await handler.HandleAsync(new GetCustomerByIdRequest(id), cancellationToken);
 
-        [HttpGet("{id:int}")]
-        [ProducesResponseType(typeof(GetCustomerByIdResponse),StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ValidationProblemDetails),StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ProblemDetails),StatusCodes.Status404NotFound)]
-        [ProducesResponseType(typeof(ProblemDetails),StatusCodes.Status409Conflict)]
-        [ProducesResponseType(typeof(ProblemDetails),StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(typeof(ProblemDetails),StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<GetCustomerByIdResponse>>GetCustomerById([FromRoute] int id,
-            CancellationToken cancellationToken)
-        {
-            var result = await _handler.HandleAsync(new GetCustomerByIdRequest(id), cancellationToken);
+                return result.ToEndpointResult(httpContext);
+            })
+            .MapToApiVersion(new ApiVersion(1, 0))
+            .WithName("GetCustomerById")
+            .Produces<GetCustomerByIdResponse>(StatusCodes.Status200OK)
+            .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest)
+            .Produces<ProblemDetails>(StatusCodes.Status404NotFound)
+            .Produces<ProblemDetails>(StatusCodes.Status409Conflict)
+            .Produces<ProblemDetails>(StatusCodes.Status403Forbidden)
+            .Produces<ProblemDetails>(StatusCodes.Status500InternalServerError);
 
-            return HandleResult(result);
+            return group;
         }
     }
 }

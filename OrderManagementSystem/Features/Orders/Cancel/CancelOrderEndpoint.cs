@@ -1,40 +1,34 @@
-﻿using Asp.Versioning;
-using Microsoft.AspNetCore.Components;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using OrderManagementSystem.Common.Api;
 
 namespace OrderManagementSystem.Features.Orders.Cancel
 {
-    [ApiVersion("1.0")]
-    [Microsoft.AspNetCore.Mvc.Route("api/v{version:apiVersion}/orders")]
-    [Tags("Orders")]
-    public class CancelOrderEndpoint:ApiControllerBase
+    public static class CancelOrderEndpoint
     {
-        private readonly CancelOrderHandler _handler;
-
-        public CancelOrderEndpoint(CancelOrderHandler handler)
+        public static RouteGroupBuilder MapCancelOrderEndpoint(this RouteGroupBuilder group)
         {
-            ArgumentNullException.ThrowIfNull(handler); 
-            _handler = handler;
+            group.MapPost("{id:int}/cancel", async (
+                [FromRoute] int id,
+                CancelOrderHandler handler,
+                HttpContext httpContext,
+                CancellationToken cancellationToken) =>
+            {
+                var result = await handler.HandleAsync(
+                    new CancelOrderRequest(id),
+                    cancellationToken);
+
+                return result.ToEndpointResult(httpContext);
+            })
+            .MapToApiVersion(new ApiVersion(1, 0))
+            .WithName("CancelOrder")
+            .Produces<CancelOrderResponse>(StatusCodes.Status200OK)
+            .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest)
+            .Produces<ProblemDetails>(StatusCodes.Status404NotFound)
+            .Produces<ProblemDetails>(StatusCodes.Status409Conflict)
+            .Produces<ProblemDetails>(StatusCodes.Status500InternalServerError);
+
+            return group;
         }
-
-        [HttpPost("{id:int}/cancel")]
-        [ProducesResponseType(typeof(CancelOrderResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<CancelOrderResponse>> Cancel(
-                    [FromRoute] int id,
-                    CancellationToken cancellationToken)
-        {
-            var result = await _handler.HandleAsync(
-                new CancelOrderRequest(id),
-                cancellationToken);
-
-            return HandleResult(result);
-        }
-
     }
-
 }

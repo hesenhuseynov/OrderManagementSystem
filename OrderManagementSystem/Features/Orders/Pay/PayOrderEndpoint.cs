@@ -1,35 +1,33 @@
-﻿using Asp.Versioning;
-using Microsoft.AspNetCore.Components;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using OrderManagementSystem.Common.Api;
 
 namespace OrderManagementSystem.Features.Orders.Pay
 {
-    [ApiVersion("1.0")]
-    [Microsoft.AspNetCore.Mvc.Route("api/v{version:apiVersion}/orders")]
-    [Tags("Orders")]
-    public sealed class PayOrderEndpoint:ApiControllerBase
+    public static class PayOrderEndpoint
     {
-        private readonly PayOrderHandler _handler;
-
-        public PayOrderEndpoint(PayOrderHandler handler)
+        public static RouteGroupBuilder MapPayOrderEndpoint(this RouteGroupBuilder group)
         {
-            ArgumentNullException.ThrowIfNull(handler);
+            group.MapPost("{orderId:int}/pay", async (
+                [FromRoute] int orderId,
+                [FromBody] PayOrderRequest request,
+                PayOrderHandler handler,
+                HttpContext httpContext,
+                CancellationToken cancellationToken) =>
+            {
+                var result = await handler.HandleAsync(orderId, request, cancellationToken);
 
-            _handler = handler;  
-        }
+                return result.ToEndpointResult(httpContext);
+            })
+            .MapToApiVersion(new ApiVersion(1, 0))
+            .WithName("PayOrder")
+            .Produces<PayOrderResponse>(StatusCodes.Status200OK)
+            .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest)
+            .Produces<ProblemDetails>(StatusCodes.Status404NotFound)
+            .Produces<ProblemDetails>(StatusCodes.Status409Conflict)
+            .Produces<ProblemDetails>(StatusCodes.Status500InternalServerError);
 
-        [HttpPost("{orderId:int}/pay")]
-        [ProducesResponseType(typeof(PayOrderResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-
-        public async Task<ActionResult<PayOrderResponse>> Pay([FromRoute]  int orderId, [FromBody] PayOrderRequest  request ,CancellationToken cancellationToken)
-        {
-            var result = await _handler.HandleAsync(orderId, request, cancellationToken);
-            return HandleResult(result);
+            return group;
         }
     }
 }
